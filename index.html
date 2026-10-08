@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TapBiz | NFC Business Directory</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="topbar">
+    <div class="brand">
+        <div class="brand-logo">TB</div>
+        <div><strong>TapBiz</strong><span>NFC Business Directory</span></div>
+    </div>
+    <button class="btn btn-primary" id="addBusinessBtn">+ Add Business</button>
+</header>
+
+<main class="container">
+    <section class="hero">
+        <div>
+            <span class="eyebrow">NFC-READY BUSINESS PROFILES</span>
+            <h1>Tap once.<br><span>Know the business.</span></h1>
+            <p>Store business contacts and details in one clean digital profile that can be opened from an NFC tag.</p>
+        </div>
+        <div class="nfc-visual"><div class="nfc-circle">⌁</div><small>TAP</small></div>
+    </section>
+
+    <section class="stats">
+        <div class="stat"><strong>{{ total }}</strong><span>Businesses</span></div>
+        <div class="stat"><strong>{{ categories }}</strong><span>Categories</span></div>
+        <div class="stat"><strong>NFC</strong><span>Ready</span></div>
+    </section>
+
+    <section class="toolbar">
+        <div><h2>Business Directory</h2><p>Search and manage your registered businesses.</p></div>
+        <input type="search" id="searchInput" class="search-input" placeholder="Search business, owner, category...">
+    </section>
+
+    <section class="business-grid">
+        {% for business in businesses %}
+        <article class="business-card">
+            <div class="card-top">
+                {% if business.logo_url %}
+                <img src="{{ business.logo_url }}" class="card-logo" alt="Business logo">
+                {% else %}
+                <div class="card-logo placeholder">{{ business.business_name[:1] }}</div>
+                {% endif %}
+                <span class="category">{{ business.category or "BUSINESS" }}</span>
+            </div>
+            <h3>{{ business.business_name }}</h3>
+            <p class="owner">Owner / Contact: {{ business.owner_name }}</p>
+            {% if business.phone %}<p>☎ {{ business.phone }}</p>{% endif %}
+            {% if business.address %}<p>⌖ {{ business.address }}</p>{% endif %}
+            <div class="card-actions">
+                <a class="btn btn-primary small" href="{{ url_for('business_profile', business_id=business.id) }}">View Profile</a>
+                <button type="button" class="btn btn-secondary small edit-btn"
+                    data-id="{{ business.id }}"
+                    data-name="{{ business.business_name }}"
+                    data-owner="{{ business.owner_name }}"
+                    data-phone="{{ business.phone or '' }}"
+                    data-email="{{ business.email or '' }}"
+                    data-address="{{ business.address or '' }}"
+                    data-category="{{ business.category or '' }}"
+                    data-details="{{ business.details or '' }}"
+                    data-facebook="{{ business.facebook or '' }}"
+                    data-instagram="{{ business.instagram or '' }}"
+                    data-website="{{ business.website or '' }}"
+                    data-logo="{{ business.logo_url or '' }}">Edit</button>
+                <form class="delete-form" method="POST" action="{{ url_for('delete_business', business_id=business.id) }}">
+                    <button type="submit" class="btn btn-danger small">Delete</button>
+                </form>
+            </div>
+        </article>
+        {% else %}
+        <div class="empty-state"><h3>No businesses yet</h3><p>Add your first business profile.</p></div>
+        {% endfor %}
+    </section>
+</main>
+
+<div class="modal" id="addModal">
+    <div class="modal-box">
+        <button class="modal-close" id="closeAddModal">&times;</button>
+        <h2>Add Business</h2><p>Create a digital business profile.</p>
+        <form method="POST" action="{{ url_for('add_business') }}" class="form-grid">
+            <label>Business Name *<input name="business_name" required></label>
+            <label>Owner / Contact Person *<input name="owner_name" required></label>
+            <label>Phone<input name="phone"></label>
+            <label>Email<input type="email" name="email"></label>
+            <label>Address<input name="address"></label>
+            <label>Category<input name="category" placeholder="Food, IT, Retail..."></label>
+            <label class="full">Business Details<textarea name="details" rows="4"></textarea></label>
+            <label>Facebook URL<input name="facebook"></label>
+            <label>Instagram URL<input name="instagram"></label>
+            <label>Website<input name="website"></label>
+            <label>Logo URL<input name="logo_url"></label>
+            <button class="btn btn-primary full" type="submit">Save Business</button>
+        </form>
+    </div>
+</div>
+
+<div class="modal" id="editModal">
+    <div class="modal-box">
+        <button class="modal-close" id="closeEditModal">&times;</button>
+        <h2>Edit Business</h2><p>Update the business information.</p>
+        <form method="POST" id="editForm" class="form-grid">
+            <label>Business Name *<input id="edit_business_name" name="business_name" required></label>
+            <label>Owner / Contact Person *<input id="edit_owner_name" name="owner_name" required></label>
+            <label>Phone<input id="edit_phone" name="phone"></label>
+            <label>Email<input id="edit_email" type="email" name="email"></label>
+            <label>Address<input id="edit_address" name="address"></label>
+            <label>Category<input id="edit_category" name="category"></label>
+            <label class="full">Business Details<textarea id="edit_details" name="details" rows="4"></textarea></label>
+            <label>Facebook URL<input id="edit_facebook" name="facebook"></label>
+            <label>Instagram URL<input id="edit_instagram" name="instagram"></label>
+            <label>Website<input id="edit_website" name="website"></label>
+            <label>Logo URL<input id="edit_logo_url" name="logo_url"></label>
+            <button class="btn btn-primary full" type="submit">Update Business</button>
+        </form>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
