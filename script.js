@@ -1,66 +1,13 @@
-document.addEventListener("DOMContentLoaded", function () {
-    const searchInput = document.getElementById("searchInput");
-    const businessCards = document.querySelectorAll(".business-card");
-
-    if (searchInput) {
-        searchInput.addEventListener("input", function () {
-            const value = this.value.toLowerCase().trim();
-            businessCards.forEach(function (card) {
-                card.style.display = card.innerText.toLowerCase().includes(value) ? "" : "none";
-            });
-        });
-    }
-
-    const addButton = document.getElementById("addBusinessBtn");
-    const addModal = document.getElementById("addModal");
-    const closeAddModal = document.getElementById("closeAddModal");
-
-    if (addButton && addModal) addButton.addEventListener("click", () => addModal.classList.add("show"));
-    if (closeAddModal && addModal) closeAddModal.addEventListener("click", () => addModal.classList.remove("show"));
-
-    const editModal = document.getElementById("editModal");
-    const closeEditModal = document.getElementById("closeEditModal");
-
-    document.querySelectorAll(".edit-btn").forEach(function (button) {
-        button.addEventListener("click", function () {
-            if (!editModal) return;
-            const form = document.getElementById("editForm");
-            form.action = "/edit/" + this.dataset.id;
-
-            document.getElementById("edit_business_name").value = this.dataset.name || "";
-            document.getElementById("edit_owner_name").value = this.dataset.owner || "";
-            document.getElementById("edit_phone").value = this.dataset.phone || "";
-            document.getElementById("edit_email").value = this.dataset.email || "";
-            document.getElementById("edit_address").value = this.dataset.address || "";
-            document.getElementById("edit_category").value = this.dataset.category || "";
-            document.getElementById("edit_details").value = this.dataset.details || "";
-            document.getElementById("edit_facebook").value = this.dataset.facebook || "";
-            document.getElementById("edit_instagram").value = this.dataset.instagram || "";
-            document.getElementById("edit_website").value = this.dataset.website || "";
-            document.getElementById("edit_logo_url").value = this.dataset.logo || "";
-
-            editModal.classList.add("show");
-        });
-    });
-
-    if (closeEditModal && editModal) closeEditModal.addEventListener("click", () => editModal.classList.remove("show"));
-
-    [addModal, editModal].forEach(function (modal) {
-        if (modal) modal.addEventListener("click", function (event) {
-            if (event.target === modal) modal.classList.remove("show");
-        });
-    });
-
-    document.querySelectorAll(".delete-form").forEach(function (form) {
-        form.addEventListener("submit", function (event) {
-            if (!confirm("Are you sure you want to delete this business?")) event.preventDefault();
-        });
-    });
-
-    document.addEventListener("keydown", function (event) {
-        if (event.key === "Escape") {
-            if (addModal) addModal.classList.remove("show");
-            if (editModal) editModal.classList.remove("show");
-        }
-    });
-});
+const KEY='tapbiz_github_pages_v1';
+const samples=[{id:'sample-1',business_name:"Juan's Computer Shop",owner_name:'Juan Dela Cruz',category:'Technology',phone:'',email:'',address:'General Trias, Cavite',logo_url:''},{id:'sample-2',business_name:'TapBiz Demo Store',owner_name:'TapBiz Team',category:'Retail',phone:'',email:'',address:'',logo_url:''}];
+function getBusinesses(){try{const raw=localStorage.getItem(KEY);if(raw!==null)return JSON.parse(raw)}catch(e){}localStorage.setItem(KEY,JSON.stringify(samples));return samples.slice()}
+function saveBusinesses(items){localStorage.setItem(KEY,JSON.stringify(items))}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function initials(n){return String(n||'TB').trim().split(/\s+/).map(w=>w[0]||'').join('').slice(0,2).toUpperCase()||'TB'}
+function logoHTML(b){return b.logo_url?`<img class="logo" src="${esc(b.logo_url)}" alt="Logo" onerror="this.outerHTML='<div class=\'logo\'>${esc(initials(b.business_name))}</div>'">`:`<div class="logo">${esc(initials(b.business_name))}</div>`}
+function renderDirectory(){const grid=document.getElementById('businessGrid');if(!grid)return;const q=(document.getElementById('searchInput').value||'').toLowerCase();const all=getBusinesses();const found=all.filter(b=>`${b.business_name} ${b.owner_name} ${b.category} ${b.address||''}`.toLowerCase().includes(q));grid.innerHTML=found.map(b=>`<article class="card">${logoHTML(b)}<span class="pill">${esc(b.category||'Business')}</span><h3>${esc(b.business_name)}</h3><p class="muted">Owner / contact: ${esc(b.owner_name)}</p>${b.phone?`<p class="muted">☎ ${esc(b.phone)}</p>`:''}${b.address?`<p class="muted">⌖ ${esc(b.address)}</p>`:''}<div class="actions"><a class="btn primary" href="business.html?id=${encodeURIComponent(b.id)}">View Profile</a><button onclick="editBusiness('${esc(b.id)}')">Edit</button><button class="danger" onclick="deleteBusiness('${esc(b.id)}')">Delete</button></div></article>`).join('');document.getElementById('emptyState').hidden=found.length>0;document.getElementById('totalCount').textContent=all.length;document.getElementById('categoryCount').textContent=new Set(all.map(b=>b.category).filter(Boolean)).size}
+function openModal(id=''){const modal=document.getElementById('businessModal');if(!modal)return;document.getElementById('businessForm').reset();document.getElementById('businessId').value=id;document.getElementById('modalTitle').textContent=id?'Edit Business':'Add Business';if(id){const b=getBusinesses().find(x=>x.id===id);if(!b)return;document.getElementById('businessName').value=b.business_name||'';document.getElementById('ownerName').value=b.owner_name||'';document.getElementById('category').value=b.category||'';document.getElementById('phone').value=b.phone||'';document.getElementById('email').value=b.email||'';document.getElementById('address').value=b.address||'';document.getElementById('logoUrl').value=b.logo_url||''}modal.classList.add('show')}
+function closeModal(){document.getElementById('businessModal')?.classList.remove('show')}
+function editBusiness(id){openModal(id)}function deleteBusiness(id){const b=getBusinesses().find(x=>x.id===id);if(b&&confirm(`Delete "${b.business_name}"?`)){saveBusinesses(getBusinesses().filter(x=>x.id!==id));renderDirectory()}}
+function renderProfile(){const el=document.getElementById('profile');if(!el)return;const id=new URLSearchParams(location.search).get('id');const b=getBusinesses().find(x=>x.id===id);if(!b){el.innerHTML='<article class="profile-card not-found"><h1>Business not found</h1><p>This profile is not saved in this browser.</p><a class="btn primary" href="index.html">Back to Directory</a></article>';return}let info='';if(b.phone)info+=`<a href="tel:${esc(b.phone)}">☎ ${esc(b.phone)}</a>`;if(b.email)info+=`<a href="mailto:${esc(b.email)}">✉ ${esc(b.email)}</a>`;if(b.address)info+=`<div>⌖ ${esc(b.address)}</div>`;el.innerHTML=`<article class="profile-card">${logoHTML(b)}<span class="pill">${esc(b.category||'Business')}</span><h1>${esc(b.business_name)}</h1><p>Owner / contact: ${esc(b.owner_name)}</p><div class="info">${info||'<div>No contact details added yet.</div>'}</div><div class="note">📳 <strong>NFC ready:</strong> This profile page is part of your TapBiz demo. See README for the static-hosting limitation.</div><p><a class="btn" href="index.html">← Back to Directory</a></p></article>`}
+document.addEventListener('DOMContentLoaded',()=>{renderDirectory();renderProfile();document.getElementById('searchInput')?.addEventListener('input',renderDirectory);document.getElementById('addBtn')?.addEventListener('click',()=>openModal());document.getElementById('closeBtn')?.addEventListener('click',closeModal);document.getElementById('cancelBtn')?.addEventListener('click',closeModal);document.getElementById('businessModal')?.addEventListener('click',e=>{if(e.target.id==='businessModal')closeModal()});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});document.getElementById('businessForm')?.addEventListener('submit',e=>{e.preventDefault();const list=getBusinesses();const id=document.getElementById('businessId').value||`biz-${Date.now()}`;const b={id,business_name:document.getElementById('businessName').value.trim(),owner_name:document.getElementById('ownerName').value.trim(),category:document.getElementById('category').value.trim(),phone:document.getElementById('phone').value.trim(),email:document.getElementById('email').value.trim(),address:document.getElementById('address').value.trim(),logo_url:document.getElementById('logoUrl').value.trim()};const i=list.findIndex(x=>x.id===id);if(i>=0)list[i]=b;else list.push(b);saveBusinesses(list);closeModal();renderDirectory()})});
